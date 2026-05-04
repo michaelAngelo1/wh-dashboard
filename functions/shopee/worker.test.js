@@ -2,7 +2,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import 'dotenv/config';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { clearSheetCache, mergeSheets } from '../mergeSheets.js';
+import { mergeSheets } from '../mergeSheets.js';
 const secretClient = new SecretManagerServiceClient();
 
 function convertTimestamp(orderCreatedTime) {
