@@ -1,7 +1,7 @@
 import { loadTokens, refreshTokens, getShopCipher } from '../../auth/tiktok/mainAuth.js';
 import crypto from 'crypto';
 import axios from 'axios';
-import { mergeSheets } from '../mergeSheets.js';
+import { clearSheetCache, mergeSheets } from '../mergeSheets.js';
 
 function convertTimestamp(orderCreatedTime) {
     const date = new Date(orderCreatedTime * 1000);
