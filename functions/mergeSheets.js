@@ -109,7 +109,7 @@ export async function mergeSheets(brand, platform, provider = "", quantity, stat
     }
 }
 
-function sleep(ms) {
+export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
