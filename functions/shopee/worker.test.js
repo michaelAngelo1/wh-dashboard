@@ -344,34 +344,22 @@ export async function warehouseShopee() {
     clearSheetCache();
 
     const brands = [
-        "Eileen Grace",
-        "Mamaway",
-        "SHRD",
-        "Miss Daisy",
-        "Polynia",
-        "CHESS",
-        "Cléviant",
-        "Mossèru",
-        "Evoke",
-        "Dr Jou",
-        "Mirae",
-        "Swissvita",
-        "G-Belle",
-        "Past Nine",
-        "Nutri & Beyond",
-        "Ivy & Lily",
-        "Naruko",
-        "Relove",
-        "Joey & Roo",
-        "M2",
-        "Rocketindo Shop",
+        "Eileen Grace", "Mamaway", "SHRD", "Miss Daisy", "Polynia",
+        "CHESS", "Cléviant", "Mossèru", "Evoke", "Dr Jou",
+        "Mirae", "Swissvita", "G-Belle", "Past Nine", "Nutri & Beyond",
+        "Ivy & Lily", "Naruko", "Relove", "Joey & Roo", "M2", "Rocketindo Shop",
     ];
 
-    for (const brand of brands) {
-        const { partner_id, partner_key, shop_id } = brandCreds[brand];
-        const access_token = await brandAccessToken(brand);
-        await mainRealtime(brand, partner_id, partner_key, access_token, shop_id);
-    }
-}
+    const STAGGER_MS = 5000;
 
+    const tasks = brands.map((brand, i) =>
+        sleep(i * STAGGER_MS).then(async () => {
+            const { partner_id, partner_key, shop_id } = brandCreds[brand];
+            const access_token = await brandAccessToken(brand);
+            await mainRealtime(brand, partner_id, partner_key, access_token, shop_id);
+        })
+    );
+
+    await Promise.all(tasks);
+}
 // await warehouseShopee();

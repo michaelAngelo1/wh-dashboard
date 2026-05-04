@@ -239,27 +239,21 @@ async function mainRealtimeTiktok(brand) {
 
 export async function warehouseTiktok() {
     clearSheetCache();
-    await mainRealtimeTiktok("Eileen Grace");
-    await mainRealtimeTiktok("Mamaway");
-    await mainRealtimeTiktok("SHRD");
-    await mainRealtimeTiktok("Miss Daisy");
-    await mainRealtimeTiktok("Polynia");
-    await mainRealtimeTiktok("CHESS");
-    await mainRealtimeTiktok("Cléviant");
-    await mainRealtimeTiktok("Mossèru");
-    await mainRealtimeTiktok("Evoke")
-    await mainRealtimeTiktok("Dr Jou");
-    await mainRealtimeTiktok("Mirae");
-    await mainRealtimeTiktok("Swissvita");
-    await mainRealtimeTiktok("G-Belle");
-    await mainRealtimeTiktok("Past Nine");
-    await mainRealtimeTiktok("Nutri & Beyond");
-    await mainRealtimeTiktok("Ivy & Lily");
-    await mainRealtimeTiktok("Naruko");
-    await mainRealtimeTiktok("Relove");
-    await mainRealtimeTiktok("Joey & Roo");
-    await mainRealtimeTiktok("Rocketindo Shop");
-    await mainRealtimeTiktok("M2");
+
+    const brands = [
+        "Eileen Grace", "Mamaway", "SHRD", "Miss Daisy", "Polynia",
+        "CHESS", "Cléviant", "Mossèru", "Evoke", "Dr Jou",
+        "Mirae", "Swissvita", "G-Belle", "Past Nine", "Nutri & Beyond",
+        "Ivy & Lily", "Naruko", "Relove", "Joey & Roo", "Rocketindo Shop", "M2",
+    ];
+
+    const STAGGER_MS = 5000;
+
+    const tasks = brands.map((brand, i) =>
+        sleep(i * STAGGER_MS).then(() => mainRealtimeTiktok(brand))
+    );
+
+    await Promise.all(tasks);
 }
 
 // await warehouseTiktok();
