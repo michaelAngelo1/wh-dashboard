@@ -33,21 +33,17 @@ async function processWriteQueue() {
     isProcessingQueue = false;
 }
 
-function enqueueWrite(task, retries = 3) {
-    return new Promise((resolve) => { 
-        writeQueue.push(async () => {
-            for (let attempt = 1; attempt <= retries; attempt++) {
-                try {
-                    resolve(await task());
-                    return;
-                } catch (e) {
-                    console.error(`[MERGE-SHEETS] Write failed (attempt ${attempt}/${retries}): ${e.message}`);
-                    if (attempt < retries) await sleep(2000);
-                }
+function enqueueWrite(task) {
+    return new Promise((resolve) => {
+        const attempt = async () => {
+            try {
+                resolve(await task());
+            } catch (e) {
+                console.error(`[MERGE-SHEETS] Write failed, re-queuing: ${e.message}`);
+                writeQueue.push(attempt); // push back to end of queue
             }
-            console.error(`[MERGE-SHEETS] Giving up on write after ${retries} attempts, continuing.`);
-            resolve(); // resolve anyway so the queue keeps draining
-        });
+        };
+        writeQueue.push(attempt);
         processWriteQueue();
     });
 }
