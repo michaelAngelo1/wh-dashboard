@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
+    "axios": "^1.15.2",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-spreadsheet": "^5.2.0"
+  }
+}
