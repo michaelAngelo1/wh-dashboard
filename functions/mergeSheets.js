@@ -27,14 +27,14 @@ async function processWriteQueue() {
         } catch (e) {
             console.error("[MERGE-SHEETS] Write queue task failed: ", e.message);
         }
-        await sleep(1000);
+        await sleep(2000);
     }
 
     isProcessingQueue = false;
 }
 
 function enqueueWrite(task, retries = 3) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => { 
         writeQueue.push(async () => {
             for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
@@ -45,7 +45,8 @@ function enqueueWrite(task, retries = 3) {
                     if (attempt < retries) await sleep(2000);
                 }
             }
-            reject(new Error(`Write failed after ${retries} attempts`));
+            console.error(`[MERGE-SHEETS] Giving up on write after ${retries} attempts, continuing.`);
+            resolve(); // resolve anyway so the queue keeps draining
         });
         processWriteQueue();
     });
@@ -86,24 +87,9 @@ async function getRowsBySheetIndex(id, sheetIndex) {
 }
 
 export async function mergeSheets(brand, platform, provider = "", quantity, status = "") {
-    if (!cachedStatusRowsPromise) cachedStatusRowsPromise = getRowsBySheetIndex(id, 0);
-    if (!cachedShipRowsPromise) cachedShipRowsPromise = getRowsBySheetIndex(id, 1);
+    if (!cachedShipRowsPromise) cachedShipRowsPromise = getRowsBySheetIndex(id, 0);
 
     console.log("Start merging data: ", brand, platform, status, quantity);
-
-    if (status) {
-        const statusRows = await cachedStatusRowsPromise;
-        for (const row of statusRows) {
-            if (row.get('Brand') == brand && row.get('Platform') == platform && row.get('Status') == status) {
-                await enqueueWrite(async () => {
-                    row.assign({ 'Quantity': quantity, 'Timestamp': getUtc7Timestamp() });
-                    if (row._rawData.length > 5) row._rawData = row._rawData.slice(0, 5);
-                    await row.save();
-                    console.log("Successfully assigned: ", brand, platform, status, quantity);
-                });
-            }
-        }
-    }
 
     if (provider) {
         const shipRows = await cachedShipRowsPromise;

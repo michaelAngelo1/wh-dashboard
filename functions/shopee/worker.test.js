@@ -188,7 +188,7 @@ export async function mainRealtime(brand, partner_id, partner_key, access_token,
     let status = "READY_TO_SHIP";
     console.log("Ready to ship count: ", totalReadyToShip);
 
-    await mergeSheets(brand, platform, "", totalReadyToShip, status);
+    // await mergeSheets(brand, platform, "", totalReadyToShip, status);
 
     await mergeSheets(brand, platform, "SPX", totalRegularCount, "");
     await mergeSheets(brand, platform, "Instant", totalInstantCount, "");
@@ -342,23 +342,33 @@ async function brandAccessToken(brand) {
 
 export async function warehouseShopee() {
 
-    const brands = [
-        "Eileen Grace", "Mamaway", "SHRD", "Miss Daisy", "Polynia",
-        "CHESS", "Cléviant", "Mossèru", "Evoke", "Dr Jou",
-        "Mirae", "Swissvita", "G-Belle", "Past Nine", "Nutri & Beyond",
-        "Ivy & Lily", "Naruko", "Relove", "Joey & Roo", "M2", "Rocketindo Shop",
-    ];
+    const partnerGroups = {
+        "PARTNER_KEY":       ["Eileen Grace", "Ivy & Lily", "M2"],
+        "SHRD_PARTNER_KEY":  ["SHRD", "Evoke", "Relove"],
+        "DRJOU_PARTNER_KEY": ["Dr Jou", "Mirae", "Joey & Roo", "Rocketindo Shop"],
+        "MOSS_PARTNER_KEY":  ["Mamaway", "Mossèru", "Naruko"],
+        "MD_PARTNER_KEY":    ["Miss Daisy", "G-Belle"],
+        "CLEVIANT_PARTNER_KEY": ["CHESS", "Cléviant"],
+        "PN_PARTNER_KEY":    ["Past Nine", "Nutri & Beyond"],
+        "POLY_PARTNER_KEY":  ["Polynia"],
+        "SV_PARTNER_KEY":    ["Swissvita"],
+    };
 
-    const STAGGER_MS = 5000;
+    const GROUP_STAGGER_MS = 2000; 
+    const WITHIN_GROUP_DELAY_MS = 15000; 
 
-    const tasks = brands.map((brand, i) =>
-        sleep(i * STAGGER_MS).then(async () => {
-            const { partner_id, partner_key, shop_id } = brandCreds[brand];
-            const access_token = await brandAccessToken(brand);
-            await mainRealtime(brand, partner_id, partner_key, access_token, shop_id);
+    const groupTasks = Object.values(partnerGroups).map((group, groupIndex) =>
+        sleep(groupIndex * GROUP_STAGGER_MS).then(async () => {
+            for (let i = 0; i < group.length; i++) {
+                const brand = group[i];
+                if (i > 0) await sleep(WITHIN_GROUP_DELAY_MS);
+                const { partner_id, partner_key, shop_id } = brandCreds[brand];
+                const access_token = await brandAccessToken(brand);
+                await mainRealtime(brand, partner_id, partner_key, access_token, shop_id);
+            }
         })
     );
 
-    await Promise.all(tasks);
+    await Promise.all(groupTasks);
 }
 // await warehouseShopee();

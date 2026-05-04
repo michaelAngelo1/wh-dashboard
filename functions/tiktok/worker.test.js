@@ -216,8 +216,8 @@ async function processOrdersGMV(brand, orders) {
     // console.log("\n")
 
     let platform = "Tiktok"
-    await mergeSheets(brand, platform, "", awaitCollectionCount, "AWAITING_COLLECTION");
-    await mergeSheets(brand, platform, "", awaitShipmentCount, "AWAITING_SHIPMENT");
+    // await mergeSheets(brand, platform, "", awaitCollectionCount, "AWAITING_COLLECTION");
+    // await mergeSheets(brand, platform, "", awaitShipmentCount, "AWAITING_SHIPMENT");
 
     await mergeSheets(brand, platform, "J&T", jntCount, "");
     await mergeSheets(brand, platform, "Instant", instantCount, "");
