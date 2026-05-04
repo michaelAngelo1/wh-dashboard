@@ -22,18 +22,30 @@ async function processWriteQueue() {
 
     while (writeQueue.length > 0) {
         const task = writeQueue.shift();
-        await task();
-        await sleep(5000);
+        try {
+            await task();
+        } catch (e) {
+            console.error("[MERGE-SHEETS] Write queue task failed: ", e.message);
+        }
+        await sleep(1000);
     }
 
     isProcessingQueue = false;
 }
 
-function enqueueWrite(task) {
+function enqueueWrite(task, retries = 3) {
     return new Promise((resolve, reject) => {
         writeQueue.push(async () => {
-            try { resolve(await task()); }
-            catch (e) { reject(e); }
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    resolve(await task());
+                    return;
+                } catch (e) {
+                    console.error(`[MERGE-SHEETS] Write failed (attempt ${attempt}/${retries}): ${e.message}`);
+                    if (attempt < retries) await sleep(2000);
+                }
+            }
+            reject(new Error(`Write failed after ${retries} attempts`));
         });
         processWriteQueue();
     });
