@@ -2,7 +2,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import 'dotenv/config';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { sleep, clearSheetCache, mergeSheets } from '../mergeSheets.js';
+import { sleep, mergeSheets } from '../mergeSheets.js';
 const secretClient = new SecretManagerServiceClient();
 
 function convertTimestamp(orderCreatedTime) {
@@ -341,7 +341,6 @@ async function brandAccessToken(brand) {
 }
 
 export async function warehouseShopee() {
-    clearSheetCache();
 
     const brands = [
         "Eileen Grace", "Mamaway", "SHRD", "Miss Daisy", "Polynia",
