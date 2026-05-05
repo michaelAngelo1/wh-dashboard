@@ -102,9 +102,10 @@ async function getOrderList(brand, partner_id, partner_key, access_token, shop_i
 async function getOrderDetail(brand, batch, partner_id, partner_key, access_token, shop_id) {
     const HOST = "https://partner.shopeemobile.com";
     const PATH = "/api/v2/order/get_order_detail";
-    let instantCount = 0;
-    let regularCount = 0;
-
+    let instantReadyToShipCount = 0;
+    let instantProcessedCount = 0;
+    let regularReadyToShipCount = 0;
+    let regularProcessedCount = 0;
     try {
         const order_sn_list = batch.join(',');
         const timestamp = Math.floor(Date.now() / 1000);
@@ -130,6 +131,7 @@ async function getOrderDetail(brand, batch, partner_id, partner_key, access_toke
         // Get Order List
         // time_from: yesterday's 12 PM
         // time_to: today's 12 PM
+
         if (data.response && data.response.order_list) {
             data.response.order_list.forEach(order => {
                 // console.log("Order ID: ", order.order_sn);
@@ -138,9 +140,15 @@ async function getOrderDetail(brand, batch, partner_id, partner_key, access_toke
                 // console.log("Order Status: ", order.order_status);
 
                 // If order status is READY_TO_SHIP and ship by date is today's 23:59:59
-                if(order.order_status == "READY_TO_SHIP" && (order.ship_by_date && convertTimestamp(order.ship_by_date) <= getEndOfToday())) {
-                    if(convertTimestamp(order.ship_by_date) < getEndOfToday()) instantCount++;
-                    else if(convertTimestamp(order.ship_by_date) == getEndOfToday()) regularCount++;
+                if((order.order_status == "READY_TO_SHIP" || order.order_status == "PROCESSED") && (order.ship_by_date && convertTimestamp(order.ship_by_date) <= getEndOfToday())) {
+                    if(convertTimestamp(order.ship_by_date) < getEndOfToday()) {
+                        if(order.order_status == "READY_TO_SHIP") instantReadyToShipCount++;
+                        else instantProcessedCount++;
+                    }
+                    else if(convertTimestamp(order.ship_by_date) == getEndOfToday()) {
+                        if(order.order_status == "READY_TO_SHIP") regularReadyToShipCount++;
+                        else regularProcessedCount++;
+                    }
                     
                     // Check the shipping_carrier
                     console.log("\n");
@@ -157,8 +165,10 @@ async function getOrderDetail(brand, batch, partner_id, partner_key, access_toke
     }
 
     return {
-        regularCount,
-        instantCount
+        instantReadyToShipCount,
+        instantProcessedCount,
+        regularReadyToShipCount,
+        regularProcessedCount
     };
 }
 
@@ -174,24 +184,27 @@ export async function mainRealtime(brand, partner_id, partner_key, access_token,
     console.log(`[REALTIME-SALES] Total ${brand} orders fetched: ${allOrders.length}`);
 
     let batchSize = 50;
-    let totalRegularCount = 0;
-    let totalInstantCount = 0;
+    let totalInstantReadyToShipCount = 0;
+    let totalInstantProcessedCount = 0;
+    let totalRegularReadyToShipCount = 0;
+    let totalRegularProcessedCount = 0;
     for(let i = 0; i < allOrders.length; i += batchSize) {
         const batchOrderSns = allOrders.slice(i, i + batchSize); 
-        let { regularCount, instantCount } = await getOrderDetail(brand, batchOrderSns, partner_id, partner_key, access_token, shop_id, JAKARTA_MIDNIGHT_TODAY); 
-        totalRegularCount += regularCount;
-        totalInstantCount += instantCount;
+        let { instantReadyToShipCount, instantProcessedCount, regularProcessedCount, regularReadyToShipCount  } = await getOrderDetail(brand, batchOrderSns, partner_id, partner_key, access_token, shop_id, JAKARTA_MIDNIGHT_TODAY); 
+        totalInstantReadyToShipCount += instantReadyToShipCount;
+        totalInstantProcessedCount += instantProcessedCount;
+        totalRegularProcessedCount += regularProcessedCount;
+        totalRegularReadyToShipCount += regularReadyToShipCount;
     }
-    let totalReadyToShip = totalInstantCount + totalRegularCount;
 
     let platform = "Shopee";
-    let status = "READY_TO_SHIP";
-    console.log("Ready to ship count: ", totalReadyToShip);
 
     // await mergeSheets(brand, platform, "", totalReadyToShip, status);
 
-    await mergeSheets(brand, platform, "SPX", totalRegularCount, "");
-    await mergeSheets(brand, platform, "Instant", totalInstantCount, "");
+    await mergeSheets(brand, platform, "SPX", "TO_ARRANGE", totalRegularReadyToShipCount);
+    await mergeSheets(brand, platform, "SPX", "TO_COLLECT", totalRegularProcessedCount);
+    await mergeSheets(brand, platform, "Instant", "TO_ARRANGE", totalInstantReadyToShipCount);
+    await mergeSheets(brand, platform, "Instant", "TO_COLLECT", totalInstantProcessedCount);
 }
 
 let brandCreds = {
@@ -371,4 +384,5 @@ export async function warehouseShopee() {
 
     await Promise.all(groupTasks);
 }
+
 // await warehouseShopee();

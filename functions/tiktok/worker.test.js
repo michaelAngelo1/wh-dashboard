@@ -180,11 +180,16 @@ async function processOrdersGMV(brand, orders) {
         "NinjaVan Indonesia" // map to NinjaVan
     ]
 
-    let jntCount = 0;
-    let instantCount = 0;
-    let gtlCount = 0;
-    let jntCargoCount = 0;
-    let ninjaVanCount = 0;
+    let jntAwaitShipmentCount = 0;
+    let jntAwaitCollectionCount = 0;
+    let instantAwaitShipmentCount = 0;
+    let instantAwaitCollectionCount = 0;
+    let gtlAwaitShipmentCount = 0;
+    let gtlAwaitCollectionCount = 0;
+    let jntCargoAwaitShipmentCount = 0;
+    let jntCargoAwaitCollectionCount = 0;
+    let ninjaVanAwaitShipmentCount = 0;
+    let ninjaVanAwaitCollectionCount = 0;
 
     tiktokOnlyOrders.forEach(o => {
         let collectionSlaTime = convertTimestamp(o.tts_sla_time ? o.tts_sla_time : 0)
@@ -193,15 +198,26 @@ async function processOrdersGMV(brand, orders) {
             o.status == "AWAITING_COLLECTION" || 
             o.status == "AWAITING_SHIPMENT")
         ) {
-            shipByTodayCount++;
-            if(o.status == "AWAITING_COLLECTION") awaitCollectionCount++;
-            else awaitShipmentCount++;
-            
-            if(o.shipping_provider == "J&T Express" || o.shipping_provider == "J&T-MP") jntCount++;
-            else if(o.shipping_provider == "Gojek" || o.shipping_provider == "Grab") instantCount++;
-            else if(o.shipping_provider == "GoTo Logistics GTL") gtlCount++;
-            else if(o.shipping_provider == "J&T Cargo") jntCargoCount++;
-            else if(o.shipping_provider == "NinjaVan Indonesia") ninjaVanCount++; 
+            if(o.shipping_provider == "J&T Express" || o.shipping_provider == "J&T-MP") {
+                if(o.status == "AWAITING_COLLECTION") jntAwaitCollectionCount++;
+                else jntAwaitShipmentCount++;
+            }
+            else if(o.shipping_provider == "Gojek" || o.shipping_provider == "Grab") {
+                if(o.status == "AWAITING_COLLECTION") instantAwaitCollectionCount++;
+                else instantAwaitShipmentCount++;
+            }
+            else if(o.shipping_provider == "GoTo Logistics GTL") {
+                if(o.status == "AWAITING_COLLECTION") gtlAwaitCollectionCount++;
+                else gtlAwaitShipmentCount++;
+            }
+            else if(o.shipping_provider == "J&T Cargo") {
+                if(o.status == "AWAITING_COLLECTION") jntCargoAwaitCollectionCount++;
+                else jntCargoAwaitShipmentCount++;
+            }
+            else if(o.shipping_provider == "NinjaVan Indonesia") {
+                if(o.status == "AWAITING_COLLECTION") ninjaVanAwaitCollectionCount++;
+                else ninjaVanAwaitShipmentCount++;
+            }
         } 
         // Case:
         // What displays as "To ship by today 23:59:59"
@@ -219,11 +235,16 @@ async function processOrdersGMV(brand, orders) {
     // await mergeSheets(brand, platform, "", awaitCollectionCount, "AWAITING_COLLECTION");
     // await mergeSheets(brand, platform, "", awaitShipmentCount, "AWAITING_SHIPMENT");
 
-    await mergeSheets(brand, platform, "J&T", jntCount, "");
-    await mergeSheets(brand, platform, "Instant", instantCount, "");
-    await mergeSheets(brand, platform, "NinjaVan", ninjaVanCount, "");
-    await mergeSheets(brand, platform, "GTL", gtlCount, "");
-    await mergeSheets(brand, platform, "J&T Cargo", jntCargoCount, "");
+    await mergeSheets(brand, platform, "J&T", "TO_ARRANGE", jntAwaitShipmentCount);
+    await mergeSheets(brand, platform, "J&T", "TO_COLLECT", jntAwaitCollectionCount);
+    await mergeSheets(brand, platform, "Instant", "TO_ARRANGE", instantAwaitShipmentCount);
+    await mergeSheets(brand, platform, "Instant", "TO_COLLECT", instantAwaitCollectionCount);
+    await mergeSheets(brand, platform, "NinjaVan", "TO_ARRANGE", ninjaVanAwaitShipmentCount);
+    await mergeSheets(brand, platform, "NinjaVan", "TO_COLLECT", ninjaVanAwaitCollectionCount);
+    await mergeSheets(brand, platform, "GTL", "TO_ARRANGE", gtlAwaitShipmentCount);
+    await mergeSheets(brand, platform, "GTL", "TO_COLLECT", gtlAwaitCollectionCount);
+    await mergeSheets(brand, platform, "J&T Cargo", "TO_ARRANGE", jntCargoAwaitShipmentCount);
+    await mergeSheets(brand, platform, "J&T Cargo", "TO_COLLECT", jntCargoAwaitCollectionCount);
 }
 
 async function mainRealtimeTiktok(brand) {
